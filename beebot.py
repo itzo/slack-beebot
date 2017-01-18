@@ -8,8 +8,14 @@ import sqlite3 as db
 import sys
 import re
 
-channel = '#general'
+# TODO: add logging mechanism
+# TODO: add daemonize and if connection goes down - reconnect automatically
+# TODO: add args parser (debug, daemonize)
+
+
+token = os.environ.get('SLACK_BOT_TOKEN')
 users = {}
+
 
 # add timestamp to all print statements
 old_out = sys.stdout
@@ -27,8 +33,6 @@ class timestamped:
         else:
             old_out.write(x)
 sys.stdout = timestamped()
-
-
 
 
 # crate db table if none exists
@@ -97,9 +101,6 @@ def parse_event(event):
                     reaction = data['text'].lower().split()[2]
                     if re.match(r'^[A-Za-z0-9_+]+$', reaction):
                         print_top(reaction, channel_id)
-                        #if len(response) < 1:
-                        #    response = 'Not sure we have these stats yet...'
-                        #sc.api_call("chat.postMessage", channel=channel, text=response, as_user=True)
                     else:
                         bot_usage(channel_id)
                 else:
@@ -152,12 +153,10 @@ if __name__ == '__main__':
     if os.path.exists('./reactions.db') == False:
         create_db()
     # connect to slack
-    token = os.environ.get('SLACK_BOT_TOKEN')
     sc = SlackClient(token)
     try:
         if sc.rtm_connect():
             print('Bot connected and running!')
-            #sc.api_call("chat.postMessage", channel=channel, text="beebot is back from the dead...", as_user=True)
             get_users()
             while True:
                 reaction, from_user, to_user = parse_event(sc.rtm_read())
