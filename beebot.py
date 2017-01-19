@@ -14,8 +14,7 @@ import re
 
 
 token = os.environ.get('SLACK_BOT_TOKEN')
-users = {}
-
+users, channels, ims = {}, {}, {}
 
 # add timestamp to all print statements
 old_out = sys.stdout
@@ -101,6 +100,11 @@ def parse_event(event):
                     mode = data['text'].lower().split()[1]
                     reaction = data['text'].lower().split()[2]
                     if re.match(r'^[A-Za-z0-9_+]+$', reaction):
+                        from_user = data['user']
+                        if channel_id in channels:
+                            print "%s requested to see %s %s in #%s" % (users[from_user], mode, reaction, channels[channel_id])
+                        else:
+                            print "%s requested to see %s %s via IM" % (users[from_user], mode, reaction)
                         print_top(reaction, channel_id, mode)
                     else:
                         bot_usage(channel_id)
@@ -143,12 +147,24 @@ def print_top(reaction, channel_id, mode):
         sys.exit(2)
 
 
-# get the list of users and their names for later use
-def get_users():
-    data = sc.api_call('users.list', channel='#general')
-    for user in data['members']:
+# get slack team info such as users, channels, and im's for later use
+def get_info():
+    user_data = sc.api_call('users.list')
+    for user in user_data['members']:
         print 'id: %s, name: %s' % (user['id'], user['name'])
         users[user['id']] = user['name']
+
+    chan_data = sc.api_call('channels.list')
+    for chan in chan_data['channels']:
+        print 'chan: %s, name: %s' % (chan['id'], chan['name'])
+        channels[chan['id']] = chan['name']
+
+
+    im_data = sc.api_call('im.list')
+    for im in im_data['ims']:
+        print 'im: %s, user: %s' % (im['id'], users[im['user']])
+        #ims[im['id']] = im['user']
+        ims[im['id']] = users[im['user']]
 
 
 # main
@@ -161,7 +177,7 @@ if __name__ == '__main__':
     try:
         if sc.rtm_connect():
             print('Bot connected and running!')
-            get_users()
+            get_info()
             while True:
                 reaction, from_user, to_user = parse_event(sc.rtm_read())
                 time.sleep(1)
