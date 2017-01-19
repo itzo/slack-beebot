@@ -95,12 +95,13 @@ def parse_event(event):
 
         # answer commands
         if 'text' in data:
-            if data['text'].lower().startswith('showme top'):
-                channel_id = data['channel']
+            channel_id = data['channel']
+            if data['text'].lower().startswith('showme'):
                 if len(data['text'].split()) > 2:
+                    mode = data['text'].lower().split()[1]
                     reaction = data['text'].lower().split()[2]
                     if re.match(r'^[A-Za-z0-9_+]+$', reaction):
-                        print_top(reaction, channel_id)
+                        print_top(reaction, channel_id, mode)
                     else:
                         bot_usage(channel_id)
                 else:
@@ -115,15 +116,18 @@ def bot_usage(channel_id):
 
 
 # print top recipients of a reaction
-def print_top(reaction, channel_id):
+def print_top(reaction, channel_id, mode):
     if os.path.isfile('reactions.db'):
         con = db.connect('reactions.db')
         with con:
             cur = con.cursor()
-            cur.execute("SELECT to_user, sum(counter) as count from reactions where reaction='"+ reaction +"' group by to_user order by count desc limit 5;")
+            sql = "SELECT to_user, sum(counter) as count from reactions where reaction=? group by to_user order by count desc"
+            if mode == 'top':
+                sql += " limit 5"
+            cur.execute(sql, [reaction])
             con.commit()
             rows = cur.fetchall()
-            print "Showing top "+reaction
+            print "Showing %s %s" % (mode, reaction)
             response = "```"
             if len(rows) > 0:
                 for row in rows:
