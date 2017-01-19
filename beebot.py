@@ -11,7 +11,7 @@ import re
 # TODO: add logging mechanism
 # TODO: add daemonize and if connection goes down - reconnect automatically
 # TODO: add args parser (debug, daemonize)
-
+# TODO: exclude bot from stats
 
 token = os.environ.get('SLACK_BOT_TOKEN')
 users, channels, ims = {}, {}, {}
@@ -149,21 +149,20 @@ def print_top(reaction, channel_id, mode):
 
 # get slack team info such as users, channels, and im's for later use
 def get_info():
+    # get user data
     user_data = sc.api_call('users.list')
     for user in user_data['members']:
         print 'id: %s, name: %s' % (user['id'], user['name'])
         users[user['id']] = user['name']
-
+    # get channel data
     chan_data = sc.api_call('channels.list')
     for chan in chan_data['channels']:
         print 'chan: %s, name: %s' % (chan['id'], chan['name'])
         channels[chan['id']] = chan['name']
-
-
+    # get im data
     im_data = sc.api_call('im.list')
     for im in im_data['ims']:
         print 'im: %s, user: %s' % (im['id'], users[im['user']])
-        #ims[im['id']] = im['user']
         ims[im['id']] = users[im['user']]
 
 
