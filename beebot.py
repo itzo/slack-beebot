@@ -5,6 +5,7 @@ import os
 import time
 from slackclient import SlackClient
 import sqlite3 as db
+import subprocess
 import sys
 import re
 
@@ -15,6 +16,7 @@ import re
 
 token = os.environ.get('SLACK_BOT_TOKEN')
 users = {}
+rev_parse_head = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).strip()
 
 
 # add timestamp to all print statements
@@ -106,13 +108,22 @@ def parse_event(event):
                         bot_usage(channel_id)
                 else:
                     bot_usage(channel_id)
-
+            elif data['text'].lower().startswith('beebot'):
+                if data['text'].lower().split()[1] == 'version':
+                   bot_version(channel_id)
     return None, None, None
 
 
 # send a message with the correct way to use the bot
 def bot_usage(channel_id):
     sc.api_call("chat.postMessage", channel=channel_id, text='usage: showme top <reaction>', as_user=True)
+
+# report code version (git HEAD rev), etc
+def bot_version(channel_id):
+  text = "```"
+  text += "head: %s" % rev_parse_head
+  text += "```"
+  sc.api_call("chat.postMessage", channel=channel_id, text=text, as_user=True)
 
 
 # print top recipients of a reaction
