@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import datetime
 import websocket
 import os
 import time
@@ -12,12 +13,12 @@ import re
 # TODO: add logging mechanism
 # TODO: add daemonize and if connection goes down - reconnect automatically
 # TODO: add args parser (debug, daemonize)
-
+# TODO: exclude bot from stats
 
 token = os.environ.get('SLACK_BOT_TOKEN')
-users = {}
+users, channels, ims = {}, {}, {}
 rev_parse_head = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).strip()
-
+time_started = str(datetime.datetime.now())
 
 # add timestamp to all print statements
 old_out = sys.stdout
@@ -103,6 +104,11 @@ def parse_event(event):
                     mode = data['text'].lower().split()[1]
                     reaction = data['text'].lower().split()[2]
                     if re.match(r'^[A-Za-z0-9_+]+$', reaction):
+                        from_user = data['user']
+                        if channel_id in channels:
+                            print "%s requested to see %s %s in #%s" % (users[from_user], mode, reaction, channels[channel_id])
+                        else:
+                            print "%s requested to see %s %s via IM" % (users[from_user], mode, reaction)
                         print_top(reaction, channel_id, mode)
                     else:
                         bot_usage(channel_id)
@@ -116,14 +122,19 @@ def parse_event(event):
 
 # send a message with the correct way to use the bot
 def bot_usage(channel_id):
-    sc.api_call("chat.postMessage", channel=channel_id, text='usage: showme top <reaction>', as_user=True)
+    sc.api_call("chat.postMessage", channel=channel_id, text='usage: showme [top|all] <reaction>', as_user=True)
 
-# report code version (git HEAD rev), etc
+# report code version (git HEAD rev), start time, etc
 def bot_version(channel_id):
-  text = "```"
-  text += "head: %s" % rev_parse_head
-  text += "```"
-  sc.api_call("chat.postMessage", channel=channel_id, text=text, as_user=True)
+    text = '''```
+{:{w}} {:{w}} 
+{:{w}} {:{w}} 
+```'''.format(
+    'started:', time_started,
+    'head:', rev_parse_head,
+    w=14,
+    )
+    sc.api_call("chat.postMessage", channel=channel_id, text=text, as_user=True)
 
 
 # print top recipients of a reaction
@@ -154,12 +165,23 @@ def print_top(reaction, channel_id, mode):
         sys.exit(2)
 
 
-# get the list of users and their names for later use
-def get_users():
-    data = sc.api_call('users.list', channel='#general')
-    for user in data['members']:
+# get slack team info such as users, channels, and im's for later use
+def get_info():
+    # get user data
+    user_data = sc.api_call('users.list')
+    for user in user_data['members']:
         print 'id: %s, name: %s' % (user['id'], user['name'])
         users[user['id']] = user['name']
+    # get channel data
+    chan_data = sc.api_call('channels.list')
+    for chan in chan_data['channels']:
+        print 'chan: %s, name: %s' % (chan['id'], chan['name'])
+        channels[chan['id']] = chan['name']
+    # get im data
+    im_data = sc.api_call('im.list')
+    for im in im_data['ims']:
+        print 'im: %s, user: %s' % (im['id'], users[im['user']])
+        ims[im['id']] = users[im['user']]
 
 
 # main
@@ -172,7 +194,7 @@ if __name__ == '__main__':
     try:
         if sc.rtm_connect():
             print('Bot connected and running!')
-            get_users()
+            get_info()
             while True:
                 reaction, from_user, to_user = parse_event(sc.rtm_read())
                 time.sleep(1)
