@@ -122,7 +122,16 @@ def parse_event(event):
 
 # send a message with the correct way to use the bot
 def bot_usage(channel_id):
-    sc.api_call("chat.postMessage", channel=channel_id, text='usage: showme [top|all] <reaction>', as_user=True)
+    text = '''```
+usage:
+    {:{w}} {:{w}} 
+    {:{w}} {:{w}} 
+```'''.format(
+        'showme', '[top|all] <reaction>',
+        'beebot', '[version]',
+        w=7,
+    )
+    sc.api_call("chat.postMessage", channel=channel_id, text=text, as_user=True)
 
 # report code version (git HEAD rev), start time, etc
 def bot_version(channel_id):
