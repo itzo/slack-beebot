@@ -109,12 +109,18 @@ def parse_event(event):
                             print "%s requested to see %s %s in #%s" % (users[from_user], mode, reaction, channels[channel_id])
                         else:
                             print "%s requested to see %s %s via IM" % (users[from_user], mode, reaction)
+                        # FIXME: add an arg to switch between DM or in other channels
+                        if (True == True):
+                            channel_id = data['user']
                         print_top(reaction, channel_id, mode)
                     else:
                         bot_usage(channel_id)
                 else:
                     bot_usage(channel_id)
             elif len(data['text'].split()) > 1 and data['text'].lower().startswith('beebot'):
+                # FIXME: add an arg to switch between DM or in other channels
+                if (True == True):
+                    channel_id = data['user']
                 if data['text'].lower().split()[1] == 'version':
                    bot_version(channel_id)
     return None, None, None
