@@ -209,7 +209,6 @@ def get_info():
 
 # open connection to slack
 def sl_connect(retry):
-    print "con_retry is now: " + str(retry)
     try:
         if sc.rtm_connect():
             print('INFO: Bot connected and running!')
