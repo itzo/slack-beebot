@@ -104,7 +104,7 @@ def parse_event(event):
                 if len(data['text'].split()) > 2:
                     mode = data['text'].lower().split()[1]
                     reaction = data['text'].lower().split()[2]
-                    if re.match(r'^[A-Za-z0-9_+]+$', reaction):
+                    if re.match(r'^[A-Za-z0-9_+-]+$', reaction):
                         from_user = data['user']
                         if channel_id in channels:
                             print "%s requested to see %s %s in #%s" % (users[from_user], mode, reaction, channels[channel_id])
