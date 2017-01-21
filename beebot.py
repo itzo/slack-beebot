@@ -118,6 +118,9 @@ def parse_event(event):
                 else:
                     bot_usage(channel_id)
             elif len(data['text'].split()) > 1 and data['text'].lower().startswith('beebot'):
+                # FIXME: add an arg to switch between DM or in other channels
+                if (True == True):
+                    channel_id = data['user']
                 if data['text'].lower().split()[1] == 'version':
                    bot_version(channel_id)
     return None, None, None
