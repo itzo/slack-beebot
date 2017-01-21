@@ -114,7 +114,7 @@ def parse_event(event):
                         bot_usage(channel_id)
                 else:
                     bot_usage(channel_id)
-            elif data['text'].lower().startswith('beebot'):
+            elif len(data['text'].split()) > 1 and data['text'].lower().startswith('beebot'):
                 if data['text'].lower().split()[1] == 'version':
                    bot_version(channel_id)
     return None, None, None
