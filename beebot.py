@@ -128,6 +128,11 @@ def print_top(reaction, channel_id, mode):
             sql = "SELECT to_user, sum(counter) as count from reactions where reaction=? group by to_user order by count desc"
             if mode == 'top':
                 sql += " limit 5"
+            elif mode == 'all':
+                donothing = 'no op'
+            else:
+                bot_usage(channel_id)
+                return
             cur.execute(sql, [reaction])
             con.commit()
             rows = cur.fetchall()
