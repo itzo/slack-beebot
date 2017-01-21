@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import datetime
-import websocket
+import websocket, socket, errno
 import os
 import time
 from slackclient import SlackClient
@@ -19,6 +19,7 @@ token = os.environ.get('SLACK_BOT_TOKEN')
 users, channels, ims = {}, {}, {}
 rev_parse_head = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).strip()
 time_started = str(datetime.datetime.now())
+con_retry = 0
 
 # add timestamp to all print statements
 old_out = sys.stdout
@@ -118,6 +119,7 @@ def parse_event(event):
                 else:
                     bot_usage(channel_id)
             elif len(data['text'].split()) > 1 and data['text'].lower().startswith('beebot'):
+
                 # FIXME: add an arg to switch between DM or in other channels
                 if (True == True):
                     channel_id = data['user']
@@ -131,8 +133,8 @@ def parse_event(event):
 def bot_usage(channel_id):
     text = '''```
 usage:
-    {:{w}} {:{w}} 
-    {:{w}} {:{w}} 
+    {:{w}} {:{w}}
+    {:{w}} {:{w}}
 ```'''.format(
         'showme', '[top|all] <reaction>',
         'beebot', '[version]',
@@ -143,8 +145,8 @@ usage:
 # report code version (git HEAD rev), start time, etc
 def bot_version(channel_id):
     text = '''```
-{:{w}} {:{w}} 
-{:{w}} {:{w}} 
+{:{w}} {:{w}}
+{:{w}} {:{w}}
 ```'''.format(
     'started:', time_started,
     'head:', rev_parse_head,
@@ -205,6 +207,56 @@ def get_info():
         ims[im['id']] = users[im['user']]
 
 
+# open connection to slack
+def sl_connect(retry):
+    print "con_retry is now: " + str(retry)
+    try:
+        if sc.rtm_connect():
+            print('INFO: Bot connected and running!')
+            global con_retry
+            con_retry = 0
+            get_info()
+
+            while True:
+                try:
+                    reaction, from_user, to_user = parse_event(sc.rtm_read())
+                    time.sleep(1)
+                except socket.error, e:
+                    if isinstance(e.args, tuple):
+                        print "ERROR: errno is %d" % e[0]
+                        if e[0] == errno.EPIPE:
+                            # remote peer disconnected
+                            print "ERROR: Detected remote disconnect"
+                            sl_con_retry()
+                        else:
+                            # some different error
+                            print "ERROR: socket error: ", e
+                            sl_con_retry()
+                    else:
+                        print "ERROR: socket error: ", e
+                        sl_con_retry()
+                        break
+                except IOError, e:
+                    print "ERROR: IOError: ", e
+                    sl_con_retry()
+                    break
+
+        else:
+            print 'ERROR: Connection failed. Token or network issue.'
+            sl_con_retry()
+    except websocket._exceptions.WebSocketConnectionClosedException:
+        print 'ERROR: Connection closed. Did someone disable the bot integration?'
+        sl_con_retry()
+
+
+def sl_con_retry():
+    global con_retry
+    con_retry += 1
+    print "INFO: Connection retry #%d sleeping for %d seconds..." % (con_retry, con_retry*2)
+    time.sleep(con_retry*2)
+    sl_connect(con_retry)
+
+
 # main
 if __name__ == '__main__':
     # initialize db if it doesn't exist
@@ -212,15 +264,4 @@ if __name__ == '__main__':
         create_db()
     # connect to slack
     sc = SlackClient(token)
-    try:
-        if sc.rtm_connect():
-            print('Bot connected and running!')
-            get_info()
-            while True:
-                reaction, from_user, to_user = parse_event(sc.rtm_read())
-                time.sleep(1)
-        else:
-            print 'Connection failed. Check token.'
-    except websocket._exceptions.WebSocketConnectionClosedException:
-        print 'Connection closed. Did someone disable the bot integration?'
-
+    sl_connect(con_retry)
