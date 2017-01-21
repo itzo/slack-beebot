@@ -122,7 +122,8 @@ def parse_event(event):
                 if (True == True):
                     channel_id = data['user']
                 if data['text'].lower().split()[1] == 'version':
-                   bot_version(channel_id)
+                    print "%s requested to see bot version" % (users[data['user']])
+                    bot_version(channel_id)
     return None, None, None
 
 
