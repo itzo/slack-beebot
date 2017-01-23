@@ -100,9 +100,18 @@ def parse_event(event):
         # answer commands
         if 'text' in data:
             channel_id = data['channel']
+            # FIXME: add an arg to switch between DM or in other channels
+            if (True == True):
+                channel_id = data['user']
+            mode = None
             if data['text'].lower().startswith('showme'):
-                if len(data['text'].split()) > 2:
+                if len(data['text'].split()) > 1:
                     mode = data['text'].lower().split()[1]
+                    if mode == 'version':
+                        print "%s requested to see bot version" % (users[data['user']])
+                        bot_version(channel_id)
+                        return None, None, None
+                if len(data['text'].split()) > 2:
                     reaction = data['text'].lower().split()[2]
                     if re.match(r'^[A-Za-z0-9_+-]+$', reaction):
                         from_user = data['user']
@@ -110,22 +119,11 @@ def parse_event(event):
                             print "%s requested to see %s %s in #%s" % (users[from_user], mode, reaction, channels[channel_id])
                         else:
                             print "%s requested to see %s %s via IM" % (users[from_user], mode, reaction)
-                        # FIXME: add an arg to switch between DM or in other channels
-                        if (True == True):
-                            channel_id = data['user']
                         print_top(reaction, channel_id, mode)
                     else:
                         bot_usage(channel_id)
                 else:
                     bot_usage(channel_id)
-            elif len(data['text'].split()) > 1 and data['text'].lower().startswith('beebot'):
-
-                # FIXME: add an arg to switch between DM or in other channels
-                if (True == True):
-                    channel_id = data['user']
-                if data['text'].lower().split()[1] == 'version':
-                    print "%s requested to see bot version" % (users[data['user']])
-                    bot_version(channel_id)
     return None, None, None
 
 
@@ -137,7 +135,7 @@ usage:
     {:{w}} {:{w}}
 ```'''.format(
         'showme', '[top|all] <reaction>',
-        'beebot', '[version]',
+        'showme', '[version]',
         w=7,
     )
     sc.api_call("chat.postMessage", channel=channel_id, text=text, as_user=True)
