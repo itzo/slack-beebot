@@ -134,7 +134,7 @@ usage:
     {:{w}} {:{w}}
     {:{w}} {:{w}}
 ```'''.format(
-        'showme', '[top|all] <reaction>',
+        'showme', '[top|all|clicked] <reaction>',
         'showme', '[version]',
         w=7,
     )
@@ -163,7 +163,9 @@ def print_top(reaction, channel_id, mode):
             if mode == 'top':
                 sql += " limit 5"
             elif mode == 'all':
-                donothing = 'no op'
+                pass
+            elif mode == 'clicked':
+                sql = "SELECT from_user, sum(counter) as count from reactions where reaction=? group by from_user order by count desc"
             else:
                 bot_usage(channel_id)
                 return
