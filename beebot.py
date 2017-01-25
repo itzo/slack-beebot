@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 
+import argparse
 import datetime
-import websocket, socket, errno
 import os
+import re
 import time
 from slackclient import SlackClient
 import sqlite3 as db
 import subprocess
 import sys
-import re
+import websocket, socket, errno
 
 # TODO: add logging mechanism, with log rotation
 # TODO: run as a service
@@ -20,6 +21,7 @@ users, channels, ims = {}, {}, {}
 rev_parse_head = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).strip()
 time_started = str(datetime.datetime.now())
 con_retry = 0
+
 
 # add timestamp to all print statements
 old_out = sys.stdout
@@ -39,7 +41,27 @@ class timestamped:
 sys.stdout = timestamped()
 
 
-# crate db table if none exists
+# get arguments and usage
+def get_parser():
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument('-m', '--mode', default='dm', choices=['quiet', 'dm', 'channel'],
+        help="""where MODE can be one of [quiet|dm|channel].
+- quiet            don't reply to 'showme' requests.
+- dm (default)     send replies via direct message just to the requestor.
+- channel          reply where the request was received (channel/dm).""")
+    parser.add_argument('-d', '--debug', action='store_true',
+        help='enable debugging.')
+    return parser
+
+
+# parse and validate arguments
+def parse_args():
+    parser = get_parser()
+    args = parser.parse_args()
+    return args
+
+
+# create db table if none exists
 def create_db():
     try:
         con = db.connect('reactions.db')
@@ -259,6 +281,7 @@ def sl_con_retry():
 
 # main
 if __name__ == '__main__':
+    args = parse_args()
     # initialize db if it doesn't exist
     if os.path.exists('./reactions.db') == False:
         create_db()
