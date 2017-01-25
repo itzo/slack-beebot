@@ -10,10 +10,10 @@ import subprocess
 import sys
 import re
 
-# TODO: add logging mechanism
-# TODO: add daemonize and if connection goes down - reconnect automatically
-# TODO: add args parser (debug, daemonize)
-# TODO: exclude bot from stats
+# TODO: add logging mechanism, with log rotation
+# TODO: run as a service
+# TODO: add args parser (debug, daemonize, answer in channel vs DM only)
+# TODO: exclude all bots from stats
 
 token = os.environ.get('SLACK_BOT_TOKEN')
 users, channels, ims = {}, {}, {}
@@ -102,7 +102,8 @@ def parse_event(event):
             channel_id = data['channel']
             # FIXME: add an arg to switch between DM or in other channels
             if (True == True):
-                channel_id = data['user']
+                if data['user']:
+                    channel_id = data['user']
             mode = None
             if data['text'].lower().startswith('showme'):
                 if len(data['text'].split()) > 1:
