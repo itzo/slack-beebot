@@ -102,7 +102,7 @@ def parse_event(event):
             channel_id = data['channel']
             # FIXME: add an arg to switch between DM or in other channels
             if (True == True):
-                if data['user']:
+                if 'user' in data:
                     channel_id = data['user']
             mode = None
             if data['text'].lower().startswith('showme'):
