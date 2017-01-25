@@ -25,8 +25,7 @@ QuickStart
 
 5. Use Beebot:
 
-	cd slack-beebot
-	python beebot.py
+	cd slack-beebot && python beebot.py
 
 Requirements
 ============
