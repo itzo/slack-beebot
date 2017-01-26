@@ -13,8 +13,7 @@ import websocket, socket, errno
 
 # TODO: add logging mechanism, with log rotation
 # TODO: run as a service
-# TODO: add args parser (debug, daemonize, answer in channel vs DM only)
-# TODO: exclude all bots from stats
+# TODO: exclude all bots (slackbot, beebot, etc..) from stats
 
 token = os.environ.get('SLACK_BOT_TOKEN')
 users, channels, ims = {}, {}, {}
@@ -50,7 +49,7 @@ def get_parser():
 - dm (default)     send replies via direct message just to the requestor.
 - channel          reply where the request was received (channel/dm).""")
     parser.add_argument('-d', '--debug', action='store_true',
-        help='enable debugging.')
+        help='print debug messages.')
     return parser
 
 
@@ -100,7 +99,8 @@ def db_insert(from_user, to_user, reaction, counter):
 
 # parse slack events for reactions / commands
 def parse_event(event):
-    #print str(event) + '\n'
+    if args.debug is True:
+        print str(event) + '\n'
     if event and len(event) > 0:
 
         # process reactions
@@ -122,8 +122,9 @@ def parse_event(event):
         # answer commands
         if 'text' in data:
             channel_id = data['channel']
-            # FIXME: add an arg to switch between DM or in other channels
-            if (True == True):
+            if args.mode == 'quiet':
+                return None, None, None
+            elif args.mode == 'dm':
                 if 'user' in data:
                     channel_id = data['user']
             mode = None
@@ -234,7 +235,7 @@ def get_info():
 def sl_connect(retry):
     try:
         if sc.rtm_connect():
-            print('INFO: Bot connected and running!')
+            print('INFO: Bot connected and running in [ ' + args.mode + ' ] mode!')
             global con_retry
             con_retry = 0
             get_info()
