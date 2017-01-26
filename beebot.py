@@ -11,8 +11,7 @@ import subprocess
 import sys
 import websocket, socket, errno
 
-# TODO: add logging mechanism, with log rotation
-# TODO: run as a service
+# TODO: add logging mechanism
 # TODO: exclude all bots (slackbot, beebot, etc..) from stats
 
 token = os.environ.get('SLACK_BOT_TOKEN')
@@ -26,7 +25,6 @@ con_retry = 0
 old_out = sys.stdout
 class timestamped:
     nl = True
-
     def write(self, x):
         # overload write()
         if x == '\n':
@@ -166,6 +164,7 @@ usage:
     )
     sc.api_call("chat.postMessage", channel=channel_id, text=text, as_user=True)
 
+
 # report code version (git HEAD rev), start time, etc
 def bot_version(channel_id):
     text = '''```
@@ -239,7 +238,6 @@ def get_info():
             emojis[entry] = emoji_data['emoji'][entry].split(':')[1]
 
 
-
 # open connection to slack
 def sl_connect(retry):
     try:
@@ -248,7 +246,6 @@ def sl_connect(retry):
             global con_retry
             con_retry = 0
             get_info()
-
             while True:
                 try:
                     reaction, from_user, to_user = parse_event(sc.rtm_read())
@@ -272,7 +269,6 @@ def sl_connect(retry):
                     print "ERROR: IOError: ", e
                     sl_con_retry()
                     break
-
         else:
             print 'ERROR: Connection failed. Token or network issue.'
             sl_con_retry()
