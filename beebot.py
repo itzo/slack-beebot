@@ -16,7 +16,7 @@ import websocket, socket, errno
 # TODO: exclude all bots (slackbot, beebot, etc..) from stats
 
 token = os.environ.get('SLACK_BOT_TOKEN')
-users, channels, ims = {}, {}, {}
+users, channels, ims, emojis = {}, {}, {}, {}
 rev_parse_head = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).strip()
 time_started = str(datetime.datetime.now())
 con_retry = 0
@@ -143,6 +143,8 @@ def parse_event(event):
                             print "%s requested to see %s %s in #%s" % (users[from_user], mode, reaction, channels[channel_id])
                         else:
                             print "%s requested to see %s %s via IM" % (users[from_user], mode, reaction)
+                        if reaction in emojis:
+                            reaction = emojis[reaction]
                         print_top(reaction, channel_id, mode)
                     else:
                         bot_usage(channel_id)
@@ -229,6 +231,13 @@ def get_info():
     for im in im_data['ims']:
         print 'im: %s, user: %s' % (im['id'], users[im['user']])
         ims[im['id']] = users[im['user']]
+    # get emoji data
+    emoji_data = sc.api_call('emoji.list')
+    for entry in emoji_data['emoji']:
+        if 'alias:' in emoji_data['emoji'][entry]:
+            print 'alias: ' + entry + ' ==> '+ emoji_data['emoji'][entry].split(':')[1]
+            emojis[entry] = emoji_data['emoji'][entry].split(':')[1]
+
 
 
 # open connection to slack
