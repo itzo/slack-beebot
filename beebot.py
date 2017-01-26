@@ -1,25 +1,26 @@
 #!/usr/bin/env python
 
+import argparse
 import datetime
-import websocket, socket, errno
 import os
+import re
 import time
 from slackclient import SlackClient
 import sqlite3 as db
 import subprocess
 import sys
-import re
+import websocket, socket, errno
 
 # TODO: add logging mechanism, with log rotation
 # TODO: run as a service
-# TODO: add args parser (debug, daemonize, answer in channel vs DM only)
-# TODO: exclude all bots from stats
+# TODO: exclude all bots (slackbot, beebot, etc..) from stats
 
 token = os.environ.get('SLACK_BOT_TOKEN')
 users, channels, ims = {}, {}, {}
 rev_parse_head = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).strip()
 time_started = str(datetime.datetime.now())
 con_retry = 0
+
 
 # add timestamp to all print statements
 old_out = sys.stdout
@@ -39,7 +40,27 @@ class timestamped:
 sys.stdout = timestamped()
 
 
-# crate db table if none exists
+# get arguments and usage
+def get_parser():
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument('-m', '--mode', default='dm', choices=['quiet', 'dm', 'channel'],
+        help="""where MODE can be one of [quiet|dm|channel].
+- quiet            don't reply to 'showme' requests.
+- dm (default)     send replies via direct message just to the requestor.
+- channel          reply where the request was received (channel/dm).""")
+    parser.add_argument('-d', '--debug', action='store_true',
+        help='print debug messages.')
+    return parser
+
+
+# parse and validate arguments
+def parse_args():
+    parser = get_parser()
+    args = parser.parse_args()
+    return args
+
+
+# create db table if none exists
 def create_db():
     try:
         con = db.connect('reactions.db')
@@ -78,7 +99,8 @@ def db_insert(from_user, to_user, reaction, counter):
 
 # parse slack events for reactions / commands
 def parse_event(event):
-    #print str(event) + '\n'
+    if args.debug is True:
+        print str(event) + '\n'
     if event and len(event) > 0:
 
         # process reactions
@@ -100,8 +122,9 @@ def parse_event(event):
         # answer commands
         if 'text' in data:
             channel_id = data['channel']
-            # FIXME: add an arg to switch between DM or in other channels
-            if (True == True):
+            if args.mode == 'quiet':
+                return None, None, None
+            elif args.mode == 'dm':
                 if 'user' in data:
                     channel_id = data['user']
             mode = None
@@ -212,7 +235,7 @@ def get_info():
 def sl_connect(retry):
     try:
         if sc.rtm_connect():
-            print('INFO: Bot connected and running!')
+            print('INFO: Bot connected and running in [ ' + args.mode + ' ] mode!')
             global con_retry
             con_retry = 0
             get_info()
@@ -259,6 +282,7 @@ def sl_con_retry():
 
 # main
 if __name__ == '__main__':
+    args = parse_args()
     # initialize db if it doesn't exist
     if os.path.exists('./reactions.db') == False:
         create_db()
