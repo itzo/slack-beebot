@@ -135,17 +135,14 @@ def parse_event(event):
                         return None, None, None
                 if len(data['text'].split()) > 2:
                     reaction = data['text'].lower().split()[2]
-                    if re.match(r'^[A-Za-z0-9_+-]+$', reaction):
-                        from_user = data['user']
-                        if channel_id in channels:
-                            print "%s requested to see %s %s in #%s" % (users[from_user], mode, reaction, channels[channel_id])
-                        else:
-                            print "%s requested to see %s %s via IM" % (users[from_user], mode, reaction)
-                        if reaction in emojis:
-                            reaction = emojis[reaction]
-                        print_top(reaction, channel_id, mode)
+                    from_user = data['user']
+                    if channel_id in channels:
+                        print "%s requested to see %s %s in #%s" % (users[from_user], mode, reaction, channels[channel_id])
                     else:
-                        bot_usage(channel_id)
+                        print "%s requested to see %s %s via IM" % (users[from_user], mode, reaction)
+                    if reaction in emojis:
+                       reaction = emojis[reaction]
+                    print_top(reaction, channel_id, mode)
                 else:
                     bot_usage(channel_id)
     return None, None, None
