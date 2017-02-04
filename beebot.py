@@ -136,6 +136,9 @@ def parse_event(event):
                     elif mode == 'received':
                         print_received(channel_id)
                         return None, None, None
+                    elif mode == 'given':
+                        print_given(channel_id)
+                        return None, None, None
                 if len(data['text'].split()) > 2:
                     reaction = data['text'].lower().split()[2]
                     if re.match(r'^[A-Za-z0-9_+-]+$', reaction):
@@ -240,6 +243,34 @@ def print_received(channel_id, user=None):
                 sc.api_call("chat.postMessage", channel=channel_id, text=response, as_user=True)
             #else:
                 # print top 20 received reactions for a specific user in descending order
+    else:
+        print "Can't find the database.\n"
+        sys.exit(2)
+
+# print given reactions
+def print_given(channel_id, user=None):
+    if os.path.isfile('reactions.db'):
+        con = db.connect('reactions.db')
+        with con:
+            cur = con.cursor()
+            sql = "SELECT from_user, sum(counter) as count from reactions group by from_user order by count desc"
+            cur.execute(sql)
+            con.commit()
+            rows = cur.fetchall()
+            if user is None:
+                print "Showing number of given reactions per user:"
+                response = "```"
+                if len(rows) > 0:
+                    for row in rows:
+                        print "%-14s %+14d" % (users[row[0]], row[1])
+                        response += "{:14} {:14d}\n".format(users[row[0]],row[1])
+                else:
+                    response += "no reactions found"
+                    print "none found"
+                response += "```"
+                sc.api_call("chat.postMessage", channel=channel_id, text=response, as_user=True)
+            #else:
+                # print top 20 given reactions for a specific user in descending order
     else:
         print "Can't find the database.\n"
         sys.exit(2)
