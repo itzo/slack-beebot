@@ -163,8 +163,10 @@ def bot_usage(channel_id):
 usage:
     {:{w}} {:{w}}
     {:{w}} {:{w}}
+    {:{w}} {:{w}}
 ```'''.format(
         'showme', '[top|all|clicked] <reaction>',
+        'showme', '[given|received]',
         'showme', '[version]',
         w=7,
     )
