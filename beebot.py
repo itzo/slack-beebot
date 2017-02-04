@@ -104,7 +104,7 @@ def parse_event(event):
         # process reactions
         data = event[0]
         if all(x in data for x in ['user', 'item_user', 'reaction']):
-            reaction = data['reaction']
+            reaction = data['reaction'].split(':')[0] # strip skin-tones
             from_user = data['user']
             to_user = data['item_user']
             if data['type'] == 'reaction_added' and from_user != to_user:
