@@ -288,21 +288,10 @@ def get_info():
         print 'id: %s, name: %s' % (user['id'], user['name'])
         users[user['id']] = user['name']
     # get channel data
-    chan_data = sc.api_call('channels.list')
+    chan_data = sc.api_call('conversations.list')
     for chan in chan_data['channels']:
         print 'chan: %s, name: %s' % (chan['id'], chan['name'])
         channels[chan['id']] = chan['name']
-    # get im data
-    im_data = sc.api_call('im.list')
-    for im in im_data['ims']:
-        print 'im: %s, user: %s' % (im['id'], users[im['user']])
-        ims[im['id']] = users[im['user']]
-    # get emoji data
-    emoji_data = sc.api_call('emoji.list')
-    for entry in emoji_data['emoji']:
-        if 'alias:' in emoji_data['emoji'][entry]:
-            print 'alias: ' + entry + ' ==> '+ emoji_data['emoji'][entry].split(':')[1]
-            emojis[entry] = emoji_data['emoji'][entry].split(':')[1]
 
 
 # open connection to slack
